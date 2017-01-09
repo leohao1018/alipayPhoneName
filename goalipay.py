@@ -12,6 +12,7 @@ import random
 from bs4 import BeautifulSoup
 
 from business import Business, UserInfo
+from sysevent import SysEvent
 
 
 class Alipay:
@@ -41,6 +42,7 @@ class Alipay:
 
     def __login(self):
         self.__driver.get("https://authsu18.alipay.com/login/index.htm")
+        self.__driver.maximize_window()
 
         name_ele = self.__driver.find_element_by_id("J-input-user")
         name_ele.send_keys(self._loginname)
@@ -98,8 +100,16 @@ class Alipay:
             for index, p in enumerate(phones):
                 time.sleep(random.uniform(1, 3))
 
+                se = SysEvent()
+                se.mouse_click(800, 800)
+
                 code = """
                             setTimeout(function(){
+
+                                var ev = document.createEvent("MouseEvents");
+                                ev.initEvent("click", true, true);
+                                document.querySelector("#main").dispatchEvent(ev);
+
                                 document.getElementsByClassName("i-text account-display")[{0}].focus();
                                 document.getElementsByClassName("i-text account-display")[{0}].value = '{1}'
                                 document.getElementsByClassName("i-text account-display")[{0}].blur();
@@ -132,9 +142,11 @@ class Alipay:
             try:
                 phone = self.__get_elements_first(li.select('input[name="optEmails"]')).attrs["value"]
                 realname = self.__get_elements_first(li.select('input[name="realname"]')).attrs["value"]
+                # optUserIds = self.__get_elements_first(li.select('input[name="optUserIds"]'))
                 print('%s %s' % (phone, realname))
-                # r.set(phone, realname)
-                Business.updateRealNameByPhone(phone, realname)
+                # 正常请求 phone realname 都会不为空，没有不操作，下次继续获取
+                if phone is not None and phone != '' and realname is not None and realname != '':
+                    Business.updateRealNameByPhone(phone, realname)
             except Exception as e:
                 print(e)
 
@@ -152,6 +164,8 @@ if __name__ == "__main__":
     # password = sys.argv[2]
     loginName = 'shiniujin9374@yeah.net'
     password = 'wxx261'
+    # loginName = '18516291436'
+    # password = '1qazXDR%'
     if loginName is not None and loginName != '' and password is not None and password != '':
         bt = Alipay(loginName, password)
         bt.do_work()
