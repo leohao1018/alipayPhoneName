@@ -8,6 +8,7 @@
       <w>loginname</w>
       <w>nolock</w>
       <w>realname</w>
+      <w>userlist</w>
     </words>
   </dictionary>
 </component>

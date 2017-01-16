@@ -28,7 +28,7 @@ class Alipay:
         try:
             self.__login()
             # self.__goentrance()
-            self.__gopayment()
+            self.__go_payment()
 
             # time.sleep(86400)
             self.__driver.close()
@@ -54,7 +54,7 @@ class Alipay:
 
     def __goentrance(self):
         time.sleep(random.uniform(1, 2))
-        userlist = Business.getuser()
+        userlist = Business.get_users()
         for u in userlist:
             self.__driver.get("https://custweb.alipay.com/appeal/entrance")
             time.sleep(random.uniform(1, 2))
@@ -77,7 +77,8 @@ class Alipay:
             form_content = form.text
             print(form_content)
 
-    def __gopayment(self):
+    def __go_payment(self):
+        se = SysEvent()
         for i in range(5):
             time.sleep(random.uniform(1, 2))
             # self.__driver.get("https://shenghuo.alipay.com/send/payment/fill.htm")
@@ -95,20 +96,41 @@ class Alipay:
             code = code.replace('{0}', str(random.uniform(3, 5)))
             self.__driver.execute_script(code)
 
+            #
+            code = """
+                       var left = document.getElementsByClassName("i-text account-display")[0].getBoundingClientRect().left
+                       var top = document.getElementsByClassName("i-text account-display")[0].getBoundingClientRect().top
+                       var arr = []
+
+                       arr.push(left)
+                       arr.push(top)
+                       return arr
+                   """
+            point = self.__driver.execute_script(code)
+            se.mouse_click(int(point[0]) + random.randint(10, 100), int(point[1]) + 68 + random.randint(10, 30))
+
             # 录入电话号码
-            phones = Business.getphones()
+            phones = Business.get_phones()
             for index, p in enumerate(phones):
                 time.sleep(random.uniform(1, 3))
 
-                se = SysEvent()
-                se.mouse_click(800, 800)
+                # 账号输入文本框
+                code = """
+                        var left = document.getElementsByClassName("i-text account-display")[{0}].getBoundingClientRect().left
+                        var top = document.getElementsByClassName("i-text account-display")[{0}].getBoundingClientRect().top
+                        var arr = []
 
+                        arr.push(left)
+                        arr.push(top)
+                        return arr
+                    """
+                code = code.replace('{0}', str(index))
+                point = self.__driver.execute_script(code)
+                se.mouse_click(int(point[0]), int(point[1]) + 68)
+
+                # 手机号录入
                 code = """
                             setTimeout(function(){
-
-                                var ev = document.createEvent("MouseEvents");
-                                ev.initEvent("click", true, true);
-                                document.querySelector("#main").dispatchEvent(ev);
 
                                 document.getElementsByClassName("i-text account-display")[{0}].focus();
                                 document.getElementsByClassName("i-text account-display")[{0}].value = '{1}'
@@ -122,13 +144,7 @@ class Alipay:
                 code = code.replace('{2}', str(random.uniform(1, 2)))
                 self.__driver.execute_script(code)
 
-                # ele = self.__driver.find_element_by_id('ipt-search-key')
-                # ele.send_keys('')
-                # ele.send_keys(p)
-                #
-                # m_ele = self.__driver.find_element_by_name('payAmount')
-                # m_ele.send_keys('')
-                # m_ele.send_keys(random.randint(1000, 2000))
+                # se.key_input(p.Phone)
 
             self.__analysis_dom()
 
@@ -142,11 +158,14 @@ class Alipay:
             try:
                 phone = self.__get_elements_first(li.select('input[name="optEmails"]')).attrs["value"]
                 realname = self.__get_elements_first(li.select('input[name="realname"]')).attrs["value"]
-                # optUserIds = self.__get_elements_first(li.select('input[name="optUserIds"]'))
-                print('%s %s' % (phone, realname))
+                remark = self.__get_elements_first(li.select('.t-warn')).text
+
+                print('%s %s %s' % (phone, realname, remark))
+
                 # 正常请求 phone realname 都会不为空，没有不操作，下次继续获取
                 if phone is not None and phone != '' and realname is not None and realname != '':
-                    Business.updateRealNameByPhone(phone, realname)
+                    Business.update_real_name_by_phone(phone, realname, remark)
+
             except Exception as e:
                 print(e)
 

@@ -8,7 +8,7 @@ import pymssql
 
 class Business:
     @staticmethod
-    def getuser():
+    def get_users():
         userlist = []
         # u = UserInfo('彭乐乐', '362528199511050519')
         # userlist.append(u)
@@ -33,24 +33,27 @@ class Business:
         return userlist
 
     @staticmethod
-    def getphones():
+    def get_phones():
         phones = []
 
         conn = pymssql.connect(host='.\sql2008r2', user='sa', password='1qaz@WSX', database='alipay')
         cur = conn.cursor()
-        cur.execute("SELECT top 19 Id, Phone, RealName FROM dbo.PhoneRealName WITH (NOLOCK) WHERE Status = 0")
+        cur.execute("SELECT top 19 Id, Phone, RealName FROM dbo.PhoneRealName WITH (NOLOCK) WHERE Status = 0 ORDER BY Id")
         for row in cur:
             phones.append(PhoneRealName(row[0], row[1], row[2]))
         conn.close()
+
         return phones
 
-
     @staticmethod
-    def updateRealNameByPhone(phone, realname):
+    def update_real_name_by_phone(phone, realname, remark):
         if phone is not None and phone != '' and realname is not None and realname != '':
             conn = pymssql.connect(host='.\sql2008r2', user='sa', password='1qaz@WSX', database='alipay')
             cur = conn.cursor()
-            sql = "UPDATE dbo.PhoneRealName SET RealName = '%s', Status = 1 WHERE Phone = '%s'" % (realname, phone)
+
+            sql = "UPDATE dbo.PhoneRealName SET RealName = '%s', Remark = '%s', Status = 1, UpdateTime = GETDATE() WHERE Phone = '%s'" % (
+            realname, remark, phone)
+
             sql = sql.encode('utf-8')
             res = cur.execute(sql)
             print(res)
